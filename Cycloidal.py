@@ -67,6 +67,16 @@ def getPoint(theta, rMajor, rMinor, e, n):
 def distance(xa, ya, xb, yb):
   return math.hypot((xa - xb), (ya - yb))
 
+def combineFeatures_add(rootComp: adsk.fusion.Design.rootComponent, targetBody, toolBody):
+    combineFeatures = rootComp.features.combineFeatures
+    tools = adsk.core.ObjectCollection.create()
+    tools.add(toolBody)
+    input: adsk.fusion.CombineFeatureInput = combineFeatures.createInput(targetBody, tools)
+    input.isNewComponent = False
+    input.isKeepToolBodies = False
+    input.operation = adsk.fusion.FeatureOperations.JoinFeatureOperation
+    combineFeature = combineFeatures.add(input)
+
 def rotor(design, root, invert, zOffset):
   newEccentricOffset = eccentricOffset
   offsetAngle = 0
@@ -169,11 +179,11 @@ def rotor(design, root, invert, zOffset):
   ToolBodies = adsk.core.ObjectCollection.create()
   for b in circularFeat.bodies:
     ToolBodies.add(b)
-
-  combineInput = rotor.features.combineFeatures.createInput(body1, ToolBodies)
-  combineInput.operation = adsk.fusion.FeatureOperations.JoinFeatureOperation
-  combineInput.isNewComponent = False
-  rotor.features.combineFeatures.add(combineInput)
+  try:
+    for b in ToolBodies:
+      combineFeatures_add(rotor, body1, b)
+  except:
+    pass
 
   # Center bearing hole
   sk = rotor.sketches.add(constructionPlane)
